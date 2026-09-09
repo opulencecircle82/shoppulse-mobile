@@ -1,10 +1,9 @@
 # ShopPulse Mobile (Flutter) — Technician App Skeleton
 
 This is a **skeleton**, hand-written to match the ShopPulse web dashboard's
-data model and the "Customize Mobile App" theme settings — it has **not**
-been run or compiled, because the Flutter SDK isn't installed on the machine
-this was written on. Follow the steps below before opening it in an editor
-or running it.
+data model and the "Customize Mobile App" theme settings. It builds and runs
+(`flutter analyze` / `flutter test` / `flutter build apk` all pass) — see
+[Build a release APK](#build-a-release-apk) below.
 
 ## What's here
 
@@ -42,50 +41,46 @@ Follow https://docs.flutter.dev/get-started/install for your OS. Then verify:
 flutter doctor
 ```
 
-## 2. Generate the native platform scaffolding
-
-From this directory's parent, generate a fresh project and copy this `lib/`
-and `pubspec.yaml` into it (safer than running `flutter create .` directly
-on top of hand-written files):
-
-```bash
-cd "Source Code"
-flutter create --org com.shoppulse --project-name shoppulse_mobile shoppulse_mobile_scaffold
-# Copy this folder's lib/, pubspec.yaml, and README.md into
-# shoppulse_mobile_scaffold/, overwriting its defaults, then work from there
-# (or rename shoppulse_mobile_scaffold -> shoppulse-mobile once merged).
-```
-
-## 3. Install dependencies
+## 2. Install dependencies
 
 ```bash
 flutter pub get
 ```
 
-## 4. Configure Google Sign-In redirect
+## 3. Configure Supabase credentials
 
-In the **Supabase dashboard** → Authentication → URL Configuration →
-Redirect URLs, add:
+Both `flutter run` and `flutter build apk` need `SUPABASE_URL` and
+`SUPABASE_ANON_KEY` baked in via `--dart-define` — without them the app
+boots straight to a "Missing SUPABASE_URL / SUPABASE_ANON_KEY" screen
+(`SupabaseConfig.isConfigured` in `lib/config/supabase_config.dart`).
 
+```bash
+cp .env.example .env
+# then fill in SUPABASE_URL / SUPABASE_ANON_KEY from the Supabase
+# project's Settings -> API Keys (same project the web app uses)
 ```
-io.shoppulse.mobile://login-callback
-```
 
-Then register that custom scheme natively:
-- **Android**: add an intent filter for the `io.shoppulse.mobile` scheme in
-  `android/app/src/main/AndroidManifest.xml`.
-- **iOS**: add `io.shoppulse.mobile` under `CFBundleURLTypes` in
-  `ios/Runner/Info.plist`.
-
-(Exact snippets: see the `supabase_flutter` OAuth docs — this step needs the
-native project files generated in step 2 first.)
-
-## 5. Run it
+`.env` is gitignored; nothing reads it automatically except the build
+script below, so `flutter run` still needs the flags passed by hand:
 
 ```bash
 flutter run \
   --dart-define=SUPABASE_URL=https://ghbmcepnjrviinseiwqr.supabase.co \
   --dart-define=SUPABASE_ANON_KEY=<paste the anon public key from Project Settings -> API Keys>
+```
+
+## 4. Build a release APK
+
+```bash
+./scripts/build_release.sh
+```
+
+Reads `.env` and passes the `--dart-define` flags for you, then builds
+`build/app/outputs/flutter-apk/app-release.apk`. Publish it to the GitHub
+release the web dashboard's Download button points at:
+
+```bash
+gh release upload v0.1.0-skeleton build/app/outputs/flutter-apk/app-release.apk --clobber
 ```
 
 ## How theming flows through
