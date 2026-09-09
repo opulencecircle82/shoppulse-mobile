@@ -11,11 +11,23 @@ class AuthService {
 
   User? get currentUser => _client.auth.currentUser;
 
-  Future<void> signInWithGoogle() async {
-    await _client.auth.signInWithOAuth(
-      OAuthProvider.google,
-      redirectTo: 'io.shoppulse.mobile://login-callback',
-    );
+  /// Staff sign in with the username + password their shop owner set for
+  /// them in the web dashboard's Add Staff form (not Google OAuth, which
+  /// stays owner/customer-only on the web app). Supabase Auth itself only
+  /// understands email + password, so we first resolve the username to its
+  /// backing email via a SECURITY DEFINER RPC that's safe to call while
+  /// unauthenticated.
+  Future<void> signInWithUsername(String username, String password) async {
+    final email = await _client.rpc(
+      'resolve_staff_email',
+      params: {'p_username': username},
+    ) as String?;
+
+    if (email == null) {
+      throw Exception('Invalid username or password.');
+    }
+
+    await _client.auth.signInWithPassword(email: email, password: password);
   }
 
   Future<void> signOut() async {

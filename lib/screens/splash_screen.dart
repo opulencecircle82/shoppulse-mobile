@@ -3,7 +3,7 @@ import '../config/supabase_config.dart';
 import '../services/auth_service.dart';
 import '../services/shop_service.dart';
 import 'login_screen.dart';
-import 'job_list_screen.dart';
+import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -41,7 +41,7 @@ class _SplashScreenState extends State<SplashScreen> {
       return;
     }
 
-    _goTo(JobListScreen(staffContext: staff));
+    _goTo(HomeScreen(staffContext: staff));
   }
 
   void _goTo(Widget screen) {

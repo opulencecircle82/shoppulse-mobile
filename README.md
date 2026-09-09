@@ -13,7 +13,7 @@ lib/
   config/supabase_config.dart   Reads SUPABASE_URL / SUPABASE_ANON_KEY from --dart-define
   models/shop.dart              Mirrors the `shops` table (theme + rules)
   models/job_ticket.dart        Mirrors the `job_tickets` table
-  services/auth_service.dart    Google sign-in via Supabase Auth
+  services/auth_service.dart    Username/password sign-in via Supabase Auth
   services/shop_service.dart    Looks up the signed-in tech's shop + staff row
   services/job_service.dart     Fetches assigned jobs, submits start/completion proof
   services/storage_service.dart Uploads captured photos to the job-photos bucket
@@ -21,9 +21,9 @@ lib/
   theme/app_theme.dart          Builds a Flutter ThemeData from the shop's
                                  primary/accent color + font (set in the web
                                  dashboard's Customize Mobile App tab)
-  screens/splash_screen.dart    Resolves session -> login or job list
-  screens/login_screen.dart     "Continue with Google"
-  screens/job_list_screen.dart  Jobs assigned to the signed-in technician
+  screens/splash_screen.dart    Resolves session -> login or home
+  screens/login_screen.dart     Username + password sign-in
+  screens/home_screen.dart      The technician's one task for today
   screens/job_verification_screen.dart
                                  Mandatory live camera + GPS capture,
                                  matching Section 5 of the master blueprint
