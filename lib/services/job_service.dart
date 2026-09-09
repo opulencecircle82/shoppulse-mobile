@@ -19,22 +19,28 @@ class JobService {
   Future<void> submitStartProof({
     required String ticketId,
     required String photoUrl,
+    required double latitude,
+    required double longitude,
   }) async {
     await _client.from('job_tickets').update({
       'status': 'IN_PROGRESS',
       'start_photo_url': photoUrl,
       'started_at': DateTime.now().toIso8601String(),
+      'start_gps_location': 'SRID=4326;POINT($longitude $latitude)',
     }).eq('id', ticketId);
   }
 
   Future<void> submitCompletionProof({
     required String ticketId,
     required String photoUrl,
+    required double latitude,
+    required double longitude,
   }) async {
     await _client.from('job_tickets').update({
       'status': 'COMPLETED',
       'end_photo_url': photoUrl,
       'completed_at': DateTime.now().toIso8601String(),
+      'end_gps_location': 'SRID=4326;POINT($longitude $latitude)',
     }).eq('id', ticketId);
   }
 }

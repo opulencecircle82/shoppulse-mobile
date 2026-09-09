@@ -66,7 +66,11 @@ class _JobVerificationScreenState extends State<JobVerificationScreen> {
   }
 
   Future<void> _submit() async {
-    if (!_checklistCompleted || _capturedImage == null) return;
+    if (!_checklistCompleted ||
+        _capturedImage == null ||
+        _currentPosition == null) {
+      return;
+    }
 
     setState(() {
       _isSubmitting = true;
@@ -84,11 +88,15 @@ class _JobVerificationScreenState extends State<JobVerificationScreen> {
         await _jobService.submitStartProof(
           ticketId: widget.ticket.id,
           photoUrl: photoUrl,
+          latitude: _currentPosition!.latitude,
+          longitude: _currentPosition!.longitude,
         );
       } else {
         await _jobService.submitCompletionProof(
           ticketId: widget.ticket.id,
           photoUrl: photoUrl,
+          latitude: _currentPosition!.latitude,
+          longitude: _currentPosition!.longitude,
         );
       }
 
@@ -231,6 +239,7 @@ class _JobVerificationScreenState extends State<JobVerificationScreen> {
                       onPressed:
                           (_checklistCompleted &&
                                   _capturedImage != null &&
+                                  _currentPosition != null &&
                                   !_isSubmitting)
                               ? _submit
                               : null,
