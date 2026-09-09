@@ -32,7 +32,7 @@ class _JobVerificationScreenState extends State<JobVerificationScreen> {
   final _storageService = StorageService();
   final _locationService = LocationService();
 
-  bool _checklistCompleted = false;
+  final Set<int> _checkedItems = {};
   XFile? _capturedImage;
   Position? _currentPosition;
   bool _isSubmitting = false;
@@ -41,6 +41,12 @@ class _JobVerificationScreenState extends State<JobVerificationScreen> {
   bool get _isStartStage => widget.ticket.status == 'SCHEDULED';
   bool get _isCompletionStage => widget.ticket.status == 'IN_PROGRESS';
   bool get _isActionable => _isStartStage || _isCompletionStage;
+
+  List<String> get _activeChecklist =>
+      _isStartStage ? widget.ticket.startChecklist : widget.ticket.endChecklist;
+
+  bool get _checklistCompleted =>
+      _checkedItems.length >= _activeChecklist.length;
 
   Future<void> _captureLivePhotoAndGps() async {
     setState(() => _error = null);
@@ -176,7 +182,7 @@ class _JobVerificationScreenState extends State<JobVerificationScreen> {
                   ),
                 ] else ...[
                   Text(
-                    'JOB VERIFICATION PROTOCOL',
+                    _isStartStage ? 'START TASK CHECKLIST' : 'END TASK CHECKLIST',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).colorScheme.secondary,
@@ -184,17 +190,32 @@ class _JobVerificationScreenState extends State<JobVerificationScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  CheckboxListTile(
-                    value: _checklistCompleted,
-                    onChanged: (val) =>
-                        setState(() => _checklistCompleted = val ?? false),
-                    title: const Text(
-                      'Tools, Safety Gear & On-Site Equipment Inspected',
-                      style: TextStyle(color: Colors.white),
+                  if (_activeChecklist.isEmpty)
+                    const Text(
+                      'No checklist items for this step.',
+                      style: TextStyle(color: Colors.white54),
+                    )
+                  else
+                    ..._activeChecklist.asMap().entries.map(
+                      (entry) => CheckboxListTile(
+                        value: _checkedItems.contains(entry.key),
+                        onChanged: (checked) {
+                          setState(() {
+                            if (checked ?? false) {
+                              _checkedItems.add(entry.key);
+                            } else {
+                              _checkedItems.remove(entry.key);
+                            }
+                          });
+                        },
+                        title: Text(
+                          entry.value,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.zero,
+                      ),
                     ),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    contentPadding: EdgeInsets.zero,
-                  ),
                   const Divider(color: Colors.white24),
                   const SizedBox(height: 10),
                   Center(

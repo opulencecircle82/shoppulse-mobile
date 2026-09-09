@@ -6,6 +6,8 @@ class JobTicket {
   final String status;
   final String? startPhotoUrl;
   final String? endPhotoUrl;
+  final List<String> startChecklist;
+  final List<String> endChecklist;
   final DateTime? startedAt;
   final DateTime? completedAt;
 
@@ -17,6 +19,8 @@ class JobTicket {
     required this.status,
     required this.startPhotoUrl,
     required this.endPhotoUrl,
+    required this.startChecklist,
+    required this.endChecklist,
     required this.startedAt,
     required this.completedAt,
   });
@@ -30,6 +34,8 @@ class JobTicket {
       status: json['status'] as String? ?? 'UNASSIGNED',
       startPhotoUrl: json['start_photo_url'] as String?,
       endPhotoUrl: json['end_photo_url'] as String?,
+      startChecklist: _parseChecklist(json['start_checklist']),
+      endChecklist: _parseChecklist(json['end_checklist']),
       startedAt: json['started_at'] != null
           ? DateTime.tryParse(json['started_at'] as String)
           : null,
@@ -37,5 +43,10 @@ class JobTicket {
           ? DateTime.tryParse(json['completed_at'] as String)
           : null,
     );
+  }
+
+  static List<String> _parseChecklist(dynamic value) {
+    if (value is! List) return const [];
+    return value.map((item) => item.toString()).toList();
   }
 }
