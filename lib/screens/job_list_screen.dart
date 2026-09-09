@@ -152,7 +152,7 @@ class _JobCard extends StatelessWidget {
             ticket.status,
             style: const TextStyle(fontSize: 10, color: Colors.white),
           ),
-          backgroundColor: const Color(0xFF10B981).withOpacity(0.2),
+          backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.2),
         ),
       ),
     );

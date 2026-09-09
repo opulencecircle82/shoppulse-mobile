@@ -2,7 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/job_ticket.dart';
 
 class JobService {
-  final _client = Supabase.instance.client;
+  SupabaseClient get _client => Supabase.instance.client;
 
   Future<List<JobTicket>> fetchAssignedJobs(String staffId) async {
     final rows = await _client

@@ -14,7 +14,7 @@ class StaffContext {
 }
 
 class ShopService {
-  final _client = Supabase.instance.client;
+  SupabaseClient get _client => Supabase.instance.client;
 
   /// Looks up the staff_members row linked to the signed-in auth user, so we
   /// know which shop's job board and theme to load.

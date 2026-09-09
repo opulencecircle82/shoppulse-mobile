@@ -1,7 +1,11 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthService {
-  final _client = Supabase.instance.client;
+  // A getter, not a field initializer: reading Supabase.instance.client
+  // must be deferred until a method is actually called, since these
+  // service objects can be constructed (e.g. as State fields) before
+  // Supabase.initialize() has necessarily run.
+  SupabaseClient get _client => Supabase.instance.client;
 
   Stream<AuthState> get onAuthStateChange => _client.auth.onAuthStateChange;
 
