@@ -47,3 +47,8 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // FusedLocationProviderClient for the background LocationTrackingService
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+}

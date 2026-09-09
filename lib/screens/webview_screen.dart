@@ -1,9 +1,13 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import '../config/app_config.dart';
+
+const _locationServiceChannel = MethodChannel('shoppulse/location_service');
 
 /// The entire app is this one screen: a full-screen WebView loading the
 /// web-based technician app. All business logic (login, today's task,
@@ -66,6 +70,10 @@ class _WebViewScreenState extends State<WebViewScreen> {
           }),
         ),
       )
+      ..addJavaScriptChannel(
+        'ShopPulseNative',
+        onMessageReceived: _handleNativeBridgeMessage,
+      )
       ..loadRequest(Uri.parse(AppConfig.techAppUrl));
 
     final platform = controller.platform;
@@ -89,6 +97,31 @@ class _WebViewScreenState extends State<WebViewScreen> {
     }
 
     return controller;
+  }
+
+  /// Messages from the /tech web page after sign-in / sign-out (see
+  /// lib/tech/nativeBridge.ts on the web side), routed to the native
+  /// LocationTrackingService via MethodChannel.
+  void _handleNativeBridgeMessage(JavaScriptMessage message) {
+    try {
+      final data = jsonDecode(message.message) as Map<String, dynamic>;
+      switch (data['type']) {
+        case 'startTracking':
+          final apiUrl = Uri.parse(AppConfig.techAppUrl)
+              .replace(path: '/api/staff/live-location')
+              .toString();
+          _locationServiceChannel.invokeMethod('startTracking', {
+            'token': data['token'],
+            'apiUrl': apiUrl,
+          });
+          break;
+        case 'stopTracking':
+          _locationServiceChannel.invokeMethod('stopTracking');
+          break;
+      }
+    } catch (_) {
+      // Malformed bridge message — ignore rather than crash the WebView.
+    }
   }
 
   void _retry() {
