@@ -1,16 +1,15 @@
-// Basic smoke test: the app boots and shows the splash screen. Without
-// --dart-define SUPABASE_URL/SUPABASE_ANON_KEY (not set in the test
-// environment), the splash screen deterministically shows the "not
-// configured" message instead of trying to reach Supabase.
+// WebViewScreen can't be widget-tested here: WebViewPlatform.instance is
+// only registered on a real device/emulator, not in the plain widget-test
+// environment. The technician flow itself (login, today's task,
+// checklist, proof capture) lives on the website this wrapper loads, so
+// it's covered by the web app's own checks — this just confirms the
+// wrapper points at the right place.
 
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:shoppulse_mobile/main.dart';
+import 'package:shoppulse_mobile/config/app_config.dart';
 
 void main() {
-  testWidgets('App boots to splash screen', (WidgetTester tester) async {
-    await tester.pumpWidget(const ShopPulseApp());
-
-    expect(find.textContaining('SUPABASE_URL'), findsOneWidget);
+  test('AppConfig.techAppUrl defaults to the production tech app', () {
+    expect(AppConfig.techAppUrl, 'https://shoppulse-web.vercel.app/tech');
   });
 }

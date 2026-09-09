@@ -1,7 +1,7 @@
 name: shoppulse_mobile
-description: ShopPulse technician mobile app — mandatory live camera + GPS proof-of-work capture.
+description: ShopPulse technician app — thin Android wrapper around the web-based technician app (mandatory live camera + GPS proof-of-work capture ships and updates via the website, not this APK).
 publish_to: 'none'
-version: 0.1.0+1
+version: 0.2.0+1
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -9,12 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  supabase_flutter: ^2.5.0
+  webview_flutter: ^4.9.0
+  webview_flutter_android: ^3.16.0
   image_picker: ^1.1.2
   geolocator: ^13.0.1
-  google_fonts: ^6.2.1
-  intl: ^0.19.0
-  cupertino_icons: ^1.0.8
 
 dev_dependencies:
   flutter_test:
