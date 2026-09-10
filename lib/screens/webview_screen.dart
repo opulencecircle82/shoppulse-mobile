@@ -24,16 +24,49 @@ class WebViewScreen extends StatefulWidget {
   State<WebViewScreen> createState() => _WebViewScreenState();
 }
 
-class _WebViewScreenState extends State<WebViewScreen> {
+// A brief background/resume round-trip — most notably taking a photo,
+// which hands off to the native camera UI and back — must NOT trigger a
+// reload, or it would wipe out an in-progress checklist/captured photo
+// before the technician submits. Only reload after genuinely leaving the
+// app for a while, so "always show the latest deployed version" doesn't
+// come at the cost of losing in-progress proof capture.
+const _reloadAfterBackgroundDuration = Duration(minutes: 2);
+
+class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserver {
   late final WebViewController _controller;
   bool _loading = true;
   String? _error;
+  DateTime? _pausedAt;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _primeLocationPermission();
     _controller = _buildController();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _pausedAt ??= DateTime.now();
+      return;
+    }
+
+    if (state != AppLifecycleState.resumed) return;
+
+    final pausedAt = _pausedAt;
+    _pausedAt = null;
+    if (pausedAt != null &&
+        DateTime.now().difference(pausedAt) > _reloadAfterBackgroundDuration) {
+      _controller.reload();
+    }
   }
 
   Future<void> _primeLocationPermission() async {
