@@ -65,7 +65,11 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
     _pausedAt = null;
     if (pausedAt != null &&
         DateTime.now().difference(pausedAt) > _reloadAfterBackgroundDuration) {
-      _controller.reload();
+      // Android's WebView keeps its own disk HTTP cache that survives app
+      // restarts, so a plain reload() can still re-serve a stale page after
+      // a new deploy — clear it first so "resume after a while" always
+      // fetches the current site.
+      _controller.clearCache().then((_) => _controller.reload());
     }
   }
 
@@ -97,17 +101,25 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
             _error = null;
           }),
           onPageFinished: (_) => setState(() => _loading = false),
-          onWebResourceError: (error) => setState(() {
-            _loading = false;
-            _error = error.description;
-          }),
+          onWebResourceError: (error) {
+            // Android reports errors for ANY failed resource on the page —
+            // a flaky image, a blocked analytics ping, a slow sub-request —
+            // not just the main document. Treating every one of those as a
+            // fatal "Could not load ShopPulse" was hiding a perfectly
+            // working page behind an error screen on good connections.
+            // Only the main-frame navigation failing is actually fatal.
+            if (error.isForMainFrame == false) return;
+            setState(() {
+              _loading = false;
+              _error = error.description;
+            });
+          },
         ),
       )
       ..addJavaScriptChannel(
         'ShopPulseNative',
         onMessageReceived: _handleNativeBridgeMessage,
-      )
-      ..loadRequest(Uri.parse(AppConfig.techAppUrl));
+      );
 
     final platform = controller.platform;
     if (platform is AndroidWebViewController) {
@@ -128,6 +140,10 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
         return ['file://${photo.path}'];
       });
     }
+
+    controller.clearCache().then((_) {
+      controller.loadRequest(Uri.parse(AppConfig.techAppUrl));
+    });
 
     return controller;
   }
@@ -162,7 +178,7 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
       _error = null;
       _loading = true;
     });
-    _controller.reload();
+    _controller.clearCache().then((_) => _controller.reload());
   }
 
   @override

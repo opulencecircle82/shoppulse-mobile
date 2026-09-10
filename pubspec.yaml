@@ -1,7 +1,7 @@
 name: shoppulse_mobile
 description: ShopPulse technician app — thin Android wrapper around the web-based technician app (mandatory live camera + GPS proof-of-work capture ships and updates via the website, not this APK).
 publish_to: 'none'
-version: 0.2.0+1
+version: 0.2.1+2
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
