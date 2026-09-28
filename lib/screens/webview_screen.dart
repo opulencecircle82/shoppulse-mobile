@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import '../config/app_config.dart';
+import '../config/link_routing.dart';
 
 const _locationServiceChannel = MethodChannel('shoppulse/location_service');
 
@@ -100,7 +102,14 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
             _loading = true;
             _error = null;
           }),
-          onPageFinished: (_) => setState(() => _loading = false),
+          onPageFinished: (_) {
+            setState(() => _loading = false);
+            // Tells the page this app can hand a link to another app (see _handleNavigationRequest), so
+            // its Maps / Call / Text buttons are safe to use. Older builds never say this, and the page
+            // then asks the technician to update instead of following a link that would crash the screen.
+            _controller.runJavaScript('window.__shopPulseNativeLinks = true;');
+          },
+          onNavigationRequest: _handleNavigationRequest,
           onWebResourceError: (error) {
             // Android reports errors for ANY failed resource on the page —
             // a flaky image, a blocked analytics ping, a slow sub-request —
@@ -146,6 +155,28 @@ class _WebViewScreenState extends State<WebViewScreen> with WidgetsBindingObserv
     });
 
     return controller;
+  }
+
+  /// Only the technician app itself belongs inside this WebView. A link to anything else — Google Maps,
+  /// a phone number (tel:), a text (sms:) — is handed to the phone's own app for it. Left in the
+  /// WebView, those either load a web page nobody asked for or fail with net::ERR_UNKNOWN_URL_SCHEME,
+  /// which replaced the whole app with "Could not load ShopPulse" when a technician tapped
+  /// "I'm On My Way".
+  Future<NavigationDecision> _handleNavigationRequest(NavigationRequest request) async {
+    final uri = Uri.tryParse(request.url);
+    // Frames inside a page (like the shop-site preview) are left alone; so is anything without a real address.
+    if (uri == null || !request.isMainFrame) return NavigationDecision.navigate;
+
+    if (linkStaysInApp(uri, appHost: Uri.parse(AppConfig.techAppUrl).host)) {
+      return NavigationDecision.navigate;
+    }
+
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      // No app on this phone can open it — nothing to do, and the technician stays where they are.
+    }
+    return NavigationDecision.prevent;
   }
 
   /// Messages from the /tech web page after sign-in / sign-out (see
